@@ -70,4 +70,38 @@ contract TokenBank {
         _;
         _reentrancyGuard = false;
     }
+
+    function depositWithPermit2(
+        uint256 amount,
+        uint256 nonce,
+        uint256 deadline,
+        bytes calldata signature
+    ) external nonReentrant {
+        // Transfer tokens from the caller to ourselves.
+        PERMIT2.permitTransferFrom(
+            // The permit message. Spender will be inferred as the caller (us).
+            ISignatureTransfer.PermitTransferFrom({
+                permitted: ISignatureTransfer.TokenPermissions({
+                    token: address(token),
+                    amount: amount
+                }),
+                nonce: nonce,
+                deadline: deadline
+            }),
+            // The transfer recipient and amount.
+            ISignatureTransfer.SignatureTransferDetails({
+                to: address(this),
+                requestedAmount: amount
+            }),
+            // The owner of the tokens, which must also be
+            // the signer of the message, otherwise this call
+            // will fail.
+            msg.sender,
+            // The packed signature that was the result of signing
+            // the EIP712 hash of `permit`.
+            signature
+        );
+
+        deposit(amount);
+    }
 }
