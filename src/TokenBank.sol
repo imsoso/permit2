@@ -62,4 +62,12 @@ contract TokenBank {
         // 记录用户的存款
         balances[msg.sender] += amount;
     }
+
+    // Prevents reentrancy attacks via tokens with callback mechanisms.
+    modifier nonReentrant() {
+        require(!_reentrancyGuard, "no reentrancy");
+        _reentrancyGuard = true;
+        _;
+        _reentrancyGuard = false;
+    }
 }
